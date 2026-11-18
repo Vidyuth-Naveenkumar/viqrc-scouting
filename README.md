@@ -9,7 +9,7 @@ Live site: https://claude.ai/artifact/84RA3vFGU8DXjEnjUWSVs3 (private until you 
 ```
 viqrc-scouting/
 ├── README.md            this file
-├── site.html            the website (published copy is the live link above)
+├── index.html            the website (published copy is the live link above)
 └── sync/
     ├── package.json     Node project, depends on robotevents 6.0.4
     ├── package-lock.json
@@ -84,4 +84,16 @@ Python alternative: `pip install requests`, then `python3 re_sync.py` with the s
 
 ## Editing the site
 
-Change `site.html`, then ask Claude to republish it to the same artifact so the link and database stay the same. Publishing it as a new artifact would start with an empty database.
+Change `index.html`, then ask Claude to republish it to the same artifact so the link and database stay the same. Publishing it as a new artifact would start with an empty database.
+
+
+## Hosting on GitHub Pages (Supabase backend)
+
+`index.html` runs in two modes: inside a claude.ai artifact (built-in database), or on GitHub Pages using a free Supabase project for data, photos and mentor login.
+
+1. Create a free project at https://supabase.com.
+2. SQL Editor: paste `supabase/setup.sql`, replace `YOUR_EMAIL` with the mentor email, and run it.
+3. Authentication > Users > Add user: create the mentor account with that email and a password (tick "Auto confirm"). Add more editors by inserting their emails into the `editors` table.
+4. Project Settings > API: copy the Project URL and the `anon` public key into `config.js`. Never put the `service_role` key anywhere in this repo.
+5. Push to GitHub, then Settings > Pages > Deploy from branch `main`, folder `/ (root)`. The site is at `https://<user>.github.io/viqrc-scouting/`.
+6. Open the site, click **Mentor sign in**, then **Import data** and choose `nv_viqrc_ms.json`.

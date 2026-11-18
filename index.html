@@ -219,10 +219,12 @@ ol.steps{margin:0;padding-left:20px;display:grid;gap:6px}
       <div class="sugg" id="sugg" role="listbox"></div>
     </div>
     <a class="mentor-link" id="importLink" href="#import" hidden>Import data</a>
+    <a class="mentor-link" id="authLink" href="#" hidden>Mentor sign in</a>
   </div>
 </header>
 <main id="app"><div class="panel muted">Loading teams and competitions…</div></main>
 
+<script src="config.js"></script>
 <script>
 "use strict";
 /* ---------- constants ---------- */
@@ -242,6 +244,7 @@ const S = {
 
 /* ---------- helpers ---------- */
 function todayISO(){const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
+function photoUrl(id){return BE.photoBase?BE.photoBase+id:"/_blob/"+id;}
 function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
 const MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 function fmtDate(iso){if(!iso)return"";const[y,m,d]=iso.split("-").map(Number);return MON[m-1]+" "+d+", "+y;}
@@ -257,9 +260,15 @@ function teamEvents(num){
   for(const [sku,e] of S.events){ if((e.teams||[]).some(x=>x.number===num)) skus.add(sku); }
   return [...skus].map(s=>S.events.get(s)).filter(Boolean).sort((a,b)=>a.start<b.start?-1:1);
 }
+function partnerHTML(list){
+  const items=(list||[]).map(n=>{const pt=S.teams.get(n); const nm=pt&&pt.name?` ${esc(pt.name)}`:"";
+    return S.teams.has(n)?`<a href="#team-${esc(n)}">${esc(n)}${nm}</a>`:esc(n);});
+  return items.join(", ");
+}
 function proven(t){
   const m=(t&&t.matches||[]).filter(x=>x.scored!==false&&typeof x.score==="number");
   const bestMatch=m.length?Math.max(...m.map(x=>x.score)):null;
+  const bestM=m.length?m.find(x=>x.score===bestMatch):null;
   const avgMatch=m.length?Math.round(m.reduce((s,x)=>s+x.score,0)/m.length):null;
   const sk=t&&t.skills||[]; let drv=null,prg=null; const byEv={};
   for(const s of sk){ if(typeof s.score!=="number")continue;
@@ -268,7 +277,7 @@ function proven(t){
     if(s.type==="programming"){prg=Math.max(prg??0,s.score);byEv[k].programming=Math.max(byEv[k].programming,s.score);}
   }
   const combos=Object.values(byEv).map(v=>v.driver+v.programming);
-  return {bestMatch,avgMatch,matches:m.length,drv,prg,combined:combos.length?Math.max(...combos):null};
+  return {bestMatch,bestM,avgMatch,matches:m.length,drv,prg,combined:combos.length?Math.max(...combos):null};
 }
 
 /* ---------- router ---------- */
@@ -437,7 +446,7 @@ function renderTeam(num){
   const maxBar=Math.max(calcT,p.bestMatch||0,p.combined||0,1);
   const bar=(v,cls)=>`<div class="pv-bar"><i class="${cls||""}" style="width:${v?Math.round(v/maxBar*100):0}%"></i></div>`;
   const matches=(t.matches||[]).slice().sort((a,b)=>(a.date||"")<(b.date||"")?1:-1);
-  const photo=sc.photoId?`<img src="/_blob/${esc(sc.photoId)}" alt="Robot of team ${esc(num)}">`:`<div class="ph">${robotIcon()}<br>No robot photo yet</div>`;
+  const photo=sc.photoId?`<img src="${esc(photoUrl(sc.photoId))}" alt="Robot of team ${esc(num)}">`:`<div class="ph">${robotIcon()}<br>No robot photo yet</div>`;
 
   el.innerHTML=`
   <section class="panel team-head">
@@ -461,7 +470,7 @@ function renderTeam(num){
       <div class="panel-h"><h2>Scouted vs proven</h2></div>
       <div class="proven">
         <div class="pv-row"><span>Scouted max</span><span class="v num">${hasCalc?calcT:"–"}</span>${bar(calcT,"scouted")}</div>
-        <div class="pv-row"><span>Best teamwork match<br><span class="small muted">alliance score</span></span><span class="v num">${p.bestMatch??"–"}</span>${bar(p.bestMatch)}</div>
+        <div class="pv-row"><span>Best teamwork match<br><span class="small muted">alliance score${p.bestM?` · with ${partnerHTML(p.bestM.partners)||"partner unknown"}${p.bestM.eventName?` · ${esc(p.bestM.eventName)}`:""}`:""}</span></span><span class="v num">${p.bestMatch??"–"}</span>${bar(p.bestMatch)}</div>
         <div class="pv-row"><span>Average teamwork match<br><span class="small muted">${p.matches} scored match${p.matches===1?"":"es"}</span></span><span class="v num">${p.avgMatch??"–"}</span>${bar(p.avgMatch)}</div>
         <div class="pv-row"><span>Best combined skills<br><span class="small muted">driver ${p.drv??"–"} + programming ${p.prg??"–"}</span></span><span class="v num">${p.combined??"–"}</span>${bar(p.combined)}</div>
       </div>
@@ -487,7 +496,7 @@ function renderTeam(num){
     <div class="panel-h"><h2>Match results</h2><span class="small muted">${matches.length} match${matches.length===1?"":"es"}</span></div>
     ${matches.length?`<div class="tablewrap"><table><thead><tr><th>Date</th><th>Competition</th><th>Round</th><th>Match</th><th>Partner</th><th>Score</th></tr></thead><tbody>
       ${matches.map(m=>`<tr><td class="muted small" style="white-space:nowrap">${esc(fmtDate(m.date))}</td><td>${esc(m.eventName)}</td><td>${esc(m.round)}</td><td>${esc(m.name)}</td>
-        <td>${(m.partners||[]).map(n=>S.teams.has(n)?`<a href="#team-${esc(n)}">${esc(n)}</a>`:esc(n)).join(", ")||'<span class="muted">–</span>'}</td>
+        <td>${partnerHTML(m.partners)||'<span class="muted">–</span>'}</td>
         <td class="score-cell">${m.scored===false?'<span class="muted">Not played</span>':esc(m.score)}</td></tr>`).join("")}
     </tbody></table></div>`:'<div class="note">No match results yet.</div>'}
   </section>`;
@@ -640,11 +649,11 @@ function renderImport(){
 /* ---------- data ---------- */
 async function start(){
   route();
-  const db=await claude.use("db");
+  const db=await use("db");
   if(!db){app().innerHTML=`<div class="panel"><h2>Sign in to see scouting data</h2><p class="muted">Team and competition data loads for signed-in viewers of this page.</p></div>`;return;}
   S.db=db;
-  try{const user=await claude.use("user"); S.canEdit=user?!!(await user.canEdit()):false;}catch(e){S.canEdit=false;}
-  if(S.canEdit){document.getElementById("importLink").hidden=false; try{S.assets=await claude.use("assets");}catch(e){}}
+  try{const user=await use("user"); S.canEdit=user?!!(await user.canEdit()):false;}catch(e){S.canEdit=false;}
+  if(S.canEdit){document.getElementById("importLink").hidden=false; try{S.assets=await use("assets");}catch(e){}}
   const timer=setTimeout(()=>{if(!allLoaded()){const n=document.createElement("div");n.className="note";n.textContent="Scouting data is taking a while to load. It will appear here as soon as the connection catches up.";app().prepend(n);}},10000);
   const sub=(name,key,keyField)=>db.collection(name).onSnapshot(snap=>{
     const m=new Map(); for(const d of snap.docs){const v=d.data(); if(v) m.set(d.id,Object.assign({},v,keyField?{[keyField]:v[keyField]||d.id}:{}));}
@@ -654,7 +663,52 @@ async function start(){
   },err=>{S.got[key]=true;route();});
   sub("teams","teams","number"); sub("events","events","sku"); sub("scout","scout",null);
 }
-if(window.claude&&claude.use) start(); else { app().innerHTML=`<div class="panel"><h2>Open this page on claude.ai</h2><p class="muted">The scouting database is available when the page is viewed from its claude.ai link.</p></div>`; }
+/* ---------- backends ---------- */
+// Same small interface (db, user, assets) either way: the claude.ai artifact runtime, or Supabase on GitHub Pages.
+const BE={photoBase:""};
+const use=async name=>(window.claude&&claude.use)?claude.use(name):BE[name];
+async function startSupabase(cfg){
+  const {createClient}=await import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm");
+  const sb=createClient(cfg.supabaseUrl,cfg.supabaseAnonKey);
+  BE.photoBase=cfg.supabaseUrl.replace(/\/$/,"")+"/storage/v1/object/public/photos/";
+  const asDoc=r=>({id:r.id,data:()=>r.data});
+  BE.db={
+    collection:name=>({onSnapshot(ok,fail){
+      const load=async()=>{const {data,error}=await sb.from("docs").select("id,data").eq("collection",name);
+        if(error){fail&&fail(error);return;} ok({docs:(data||[]).map(asDoc),metadata:{fromCache:false}});};
+      load();
+      const ch=sb.channel("docs-"+name).on("postgres_changes",{event:"*",schema:"public",table:"docs",filter:"collection=eq."+name},load).subscribe();
+      return ()=>sb.removeChannel(ch);
+    }}),
+    doc:path=>{const i=path.indexOf("/"),collection=path.slice(0,i),id=path.slice(i+1);
+      return {
+        async set(data){const {error}=await sb.from("docs").upsert({collection,id,data,updated_at:new Date().toISOString()});if(error)throw error;},
+        async delete(){const {error}=await sb.from("docs").delete().eq("collection",collection).eq("id",id);if(error)throw error;}
+      };}
+  };
+  BE.assets={async upload(file){
+    const ext=(file.name.match(/\.[A-Za-z0-9]{1,5}$/)||[".jpg"])[0].toLowerCase();
+    const id=crypto.randomUUID()+ext;
+    const {error}=await sb.storage.from("photos").upload(id,file,{contentType:file.type||undefined});
+    if(error)throw error; return {id};}};
+  const {data:{session}}=await sb.auth.getSession();
+  let editor=false;
+  if(session){const {data}=await sb.from("editors").select("email").eq("email",session.user.email);editor=!!(data&&data.length);}
+  BE.user={canEdit:async()=>editor};
+  const al=document.getElementById("authLink"); al.hidden=false;
+  al.textContent=session?"Sign out":"Mentor sign in";
+  al.addEventListener("click",async e=>{e.preventDefault();
+    if(session){await sb.auth.signOut();location.reload();return;}
+    const email=prompt("Mentor email:"); if(!email)return;
+    const password=prompt("Password:"); if(!password)return;
+    const {error}=await sb.auth.signInWithPassword({email:email.trim(),password});
+    if(error){alert("Sign-in failed: "+error.message);return;}
+    location.reload();});
+  start();
+}
+if(window.claude&&claude.use) start();
+else if(window.VIQ_CONFIG&&VIQ_CONFIG.supabaseUrl&&VIQ_CONFIG.supabaseAnonKey) startSupabase(VIQ_CONFIG).catch(err=>{app().innerHTML=`<div class="panel"><h2>Could not connect</h2><p class="muted">${esc(err&&err.message||err)}</p></div>`;});
+else app().innerHTML=`<div class="panel"><h2>Backend not configured</h2><p class="muted">Fill in config.js with your Supabase project URL and anon key (see README).</p></div>`;
 </script>
 </body>
 </html>

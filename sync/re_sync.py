@@ -74,12 +74,20 @@ def current_season(api):
 
 
 def team_score_in_match(match, number):
-    """Return (score, partner numbers) for a team in one match, or None."""
-    for alliance in match.get("alliances", []):
-        nums = [t.get("team", {}).get("name") for t in alliance.get("teams", [])]
-        if number in nums:
-            return alliance.get("score"), [n for n in nums if n and n != number]
-    return None
+    """Return (score, partner numbers) for a team in one match, or None.
+    VEX IQ teamwork matches list the two partners as separate alliances that
+    share one score, so partners are every other team in the match."""
+    def names(a):
+        return [t.get("team", {}).get("name") for t in a.get("teams", []) if t.get("team", {}).get("name")]
+    mine = next((a for a in match.get("alliances", []) if number in names(a)), None)
+    if mine is None:
+        return None
+    partners = []
+    for a in match.get("alliances", []):
+        for n in names(a):
+            if n != number and n not in partners:
+                partners.append(n)
+    return mine.get("score"), partners
 
 
 def main():

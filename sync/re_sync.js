@@ -72,13 +72,13 @@ async function getAll(path, params) {
 const eventKey = (ev) => (ev && (ev.code || String(ev.id ?? ""))) || "";
 
 function teamScoreInMatch(match, number) {
-  for (const alliance of match.alliances ?? []) {
-    const nums = (alliance.teams ?? []).map((t) => t.team?.name).filter(Boolean);
-    if (nums.includes(number)) {
-      return { score: alliance.score, partners: nums.filter((n) => n !== number) };
-    }
-  }
-  return null;
+  // VEX IQ teamwork matches list the two partner teams as separate alliances (red/blue)
+  // that share one score, so partners are every other team in the match.
+  const names = (a) => (a.teams ?? []).map((t) => t.team?.name).filter(Boolean);
+  const mine = (match.alliances ?? []).find((a) => names(a).includes(number));
+  if (!mine) return null;
+  const partners = [...new Set((match.alliances ?? []).flatMap(names).filter((n) => n !== number))];
+  return { score: mine.score, partners };
 }
 
 async function main() {

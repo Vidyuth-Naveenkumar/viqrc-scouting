@@ -36,3 +36,10 @@ insert into storage.buckets (id, name, public) values ('photos', 'photos', true)
 drop policy if exists "editors upload photos" on storage.objects;
 create policy "editors upload photos" on storage.objects for insert to authenticated
   with check (bucket_id = 'photos' and exists (select 1 from editors e where e.email = auth.jwt() ->> 'email'));
+
+-- Table privileges (newer Supabase projects do not grant these automatically).
+-- Row-level security above still decides who may do what.
+grant usage on schema public to anon, authenticated;
+grant select on docs to anon, authenticated;
+grant insert, update, delete on docs to authenticated;
+grant select on editors to authenticated;

@@ -2,7 +2,7 @@
 
 Scouting website for Nevada middle school VEX IQ teams, 2026-27 **Level Up** season.
 
-Live site: https://claude.ai/artifact/84RA3vFGU8DXjEnjUWSVs3 (private until you share it from that page)
+Live site: (https://vidyuth-naveenkumar.github.io/viqrc-scouting/)
 
 ## Folder contents
 

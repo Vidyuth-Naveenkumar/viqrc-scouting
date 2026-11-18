@@ -46,11 +46,11 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
  * we add retries for rate limits (HTTP 429) and network hiccups.
  */
 async function getAll(path, params) {
-  for (let attempt = 1; attempt <= 5; attempt++) {
+  for (let attempt = 1; attempt <= 8; attempt++) {
     try {
       const res = await client.api.PaginatedGET(path, { params });
       if (!res.error) {
-        await sleep(250); // stay polite to the API
+        await sleep(500); // stay polite to the API
         return res.data ?? [];
       }
       const status = res.response?.status;
@@ -66,7 +66,7 @@ async function getAll(path, params) {
       await sleep(3000 * attempt);
     }
   }
-  throw new Error(`${path}: gave up after 5 attempts`);
+  throw new Error(`${path}: gave up after 8 attempts`);
 }
 
 const eventKey = (ev) => (ev && (ev.code || String(ev.id ?? ""))) || "";

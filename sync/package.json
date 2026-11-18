@@ -1,0 +1,13 @@
+{
+  "name": "viqrc-scouting-sync",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Pull Nevada middle school VEX IQ data from RobotEvents for the scouting site",
+  "scripts": {
+    "sync": "node re_sync.js"
+  },
+  "dependencies": {
+    "robotevents": "6.0.4"
+  }
+}

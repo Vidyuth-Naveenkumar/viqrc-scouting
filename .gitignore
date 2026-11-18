@@ -1,0 +1,5 @@
+node_modules/
+sync/nv_viqrc_ms.json
+sync/*.json.bak
+.env
+.DS_Store

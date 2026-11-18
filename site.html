@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nevada VEX IQ Scouting</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;600;700;800&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Layout idea: a quiet field-grey tool shell; the one loud element is the Level Up score pyramid on each team page. */
+:root{
+  --bg:#E8EBEF;         /* field tile grey */
+  --surface:#FFFFFF;
+  --surface-2:#F3F5F7;
+  --ink:#1B2532;        /* charcoal blue */
+  --muted:#5B6878;
+  --line:#CDD3DB;
+  --bean:#F2B705;       /* yellow bean bag */
+  --bean-ink:#4A3700;
+  --red:#C9352C;
+  --blue:#2B5FC4;
+  --good:#1F8A4C;
+  --tier1:#C9D3E0; --tier2:#AEBCCF; --tier3:#8FA2BC;
+  --font-display:"Saira Condensed","Arial Narrow",Arial,sans-serif;
+  --font-body:"Public Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#141A21; --surface:#1D252F; --surface-2:#232D39; --ink:#E6EBF1; --muted:#9AA8B8; --line:#334050;
+    --bean:#F5C232; --bean-ink:#2A1F00; --red:#E5574D; --blue:#5B8CF0; --good:#4CC27F;
+    --tier1:#3A4A5E; --tier2:#4A5D75; --tier3:#5D7390;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#141A21; --surface:#1D252F; --surface-2:#232D39; --ink:#E6EBF1; --muted:#9AA8B8; --line:#334050;
+  --bean:#F5C232; --bean-ink:#2A1F00; --red:#E5574D; --blue:#5B8CF0; --good:#4CC27F;
+  --tier1:#3A4A5E; --tier2:#4A5D75; --tier3:#5D7390;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.5}
+a{color:var(--blue)}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--bean);outline-offset:2px}
+h1,h2,h3{font-family:var(--font-display);font-weight:700;line-height:1.1;margin:0;text-wrap:balance}
+h1{font-size:2.6rem}
+h2{font-size:1.6rem}
+h3{font-size:1.2rem}
+.num{font-family:var(--font-display);font-variant-numeric:tabular-nums}
+
+/* top bar */
+.bar{position:sticky;top:0;z-index:20;background:var(--ink);color:var(--bg)}
+.bar-in{max-width:1180px;margin:0 auto;padding:10px 20px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit}
+.brand b{font-family:var(--font-display);font-size:1.35rem;font-weight:800;letter-spacing:.01em}
+.brand svg{flex:none}
+.search{position:relative;flex:1;min-width:220px;max-width:460px;margin-left:auto}
+.search input{width:100%;padding:9px 12px 9px 36px;border-radius:8px;border:1px solid transparent;background:color-mix(in srgb,var(--bg) 14%,transparent);color:var(--bg)}
+.search input::placeholder{color:color-mix(in srgb,var(--bg) 65%,transparent)}
+.search svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);opacity:.7}
+.sugg{position:absolute;top:calc(100% + 6px);left:0;right:0;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:8px;box-shadow:0 12px 28px rgba(0,0,0,.18);overflow:hidden;display:none}
+.sugg.open{display:block}
+.sugg a{display:flex;gap:10px;align-items:baseline;padding:9px 12px;text-decoration:none;color:inherit;border-top:1px solid var(--line)}
+.sugg a:first-child{border-top:0}
+.sugg a:hover,.sugg a.hl{background:var(--surface-2)}
+.sugg .tn{font-family:var(--font-display);font-weight:700;font-size:1.05rem;min-width:70px}
+.sugg .sub{color:var(--muted);font-size:.85rem}
+.mentor-link{color:var(--bg);opacity:.85;font-size:.9rem;text-decoration:none;border:1px solid color-mix(in srgb,var(--bg) 35%,transparent);padding:6px 10px;border-radius:7px}
+.mentor-link:hover{opacity:1}
+
+main{max-width:1180px;margin:0 auto;padding:24px 20px 60px;display:grid;gap:22px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:20px}
+.panel-h{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.muted{color:var(--muted)}
+.small{font-size:.85rem}
+.note{background:var(--surface-2);border:1px dashed var(--line);border-radius:8px;padding:12px 14px;color:var(--muted);font-size:.9rem}
+.demo-flag{display:inline-block;font-size:.72rem;font-weight:700;padding:1px 7px;border-radius:99px;background:var(--bean);color:var(--bean-ink);vertical-align:middle;margin-left:6px}
+
+/* home */
+.home-top{display:grid;grid-template-columns:1.1fr .9fr;gap:22px}
+.hero h1{margin-bottom:8px}
+.hero p{margin:0;max-width:56ch;color:var(--muted)}
+.hero-stats{display:flex;gap:28px;margin-top:18px;flex-wrap:wrap}
+.hero-stats div b{display:block;font-family:var(--font-display);font-size:2rem;line-height:1}
+.hero-stats div span{color:var(--muted);font-size:.85rem}
+.datebox{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.datebox input[type=date]{padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2)}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:8px;border:1px solid var(--line);background:var(--surface-2);cursor:pointer;text-decoration:none;color:var(--ink);font-weight:600}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.btn.bean{background:var(--bean);color:var(--bean-ink);border-color:var(--bean)}
+.btn.danger{color:var(--red)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+
+.ev-list{display:grid;gap:10px}
+.ev{display:grid;grid-template-columns:64px 1fr auto;gap:14px;align-items:center;padding:12px 14px;border:1px solid var(--line);border-radius:9px;text-decoration:none;color:inherit;background:var(--surface)}
+.ev:hover{border-color:var(--ink)}
+.ev .dt{text-align:center;border-right:1px solid var(--line);padding-right:12px}
+.ev .dt b{display:block;font-family:var(--font-display);font-size:1.7rem;line-height:1}
+.ev .dt span{font-size:.75rem;color:var(--muted)}
+.ev .nm{font-weight:600}
+.pill{font-size:.75rem;font-weight:700;padding:3px 9px;border-radius:99px;white-space:nowrap}
+.pill.live{background:color-mix(in srgb,var(--good) 18%,transparent);color:var(--good)}
+.pill.up{background:color-mix(in srgb,var(--blue) 15%,transparent);color:var(--blue)}
+.pill.done{background:var(--surface-2);color:var(--muted)}
+
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:.8rem;color:var(--muted);font-weight:600;padding:8px 10px;border-bottom:1px solid var(--line)}
+td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+tr.click{cursor:pointer}
+tr.click:hover td{background:var(--surface-2)}
+td.tn{font-family:var(--font-display);font-weight:700;font-size:1.1rem;white-space:nowrap}
+.tablewrap{overflow-x:auto}
+.typechip{display:inline-block;font-size:.78rem;padding:2px 8px;border-radius:6px;background:var(--surface-2);border:1px solid var(--line);white-space:nowrap}
+
+/* team */
+.team-head{display:grid;grid-template-columns:280px 1fr;gap:24px;align-items:start}
+.photo{aspect-ratio:4/3;border-radius:10px;background:var(--surface-2);border:1px solid var(--line);display:grid;place-items:center;overflow:hidden}
+.photo img{width:100%;height:100%;object-fit:cover}
+.photo .ph{text-align:center;color:var(--muted);font-size:.85rem;padding:10px}
+.tnum{font-family:var(--font-display);font-size:1.1rem;font-weight:700;color:var(--muted)}
+.team-head h1{font-size:2.8rem;margin:2px 0 4px}
+.facts{display:flex;gap:10px 22px;flex-wrap:wrap;margin:12px 0 0;color:var(--muted);font-size:.92rem}
+.facts b{color:var(--ink);font-weight:600}
+.writeup{margin-top:16px;max-width:68ch;white-space:pre-wrap}
+.rtype{display:inline-flex;align-items:center;gap:8px;margin-top:14px;padding:6px 12px 6px 8px;border-radius:8px;background:var(--ink);color:var(--bg);font-weight:600}
+
+.score-grid{display:grid;grid-template-columns:1.25fr .75fr;gap:22px}
+
+/* Level Up calculator graphic */
+.calc{display:grid;grid-template-columns:1fr 150px;gap:14px;align-items:end}
+.pyr{display:grid;gap:6px;justify-items:center}
+.tier{position:relative;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;border-radius:6px 6px 2px 2px;color:var(--ink);min-height:58px}
+.tier.l3{width:46%;background:var(--tier3)}
+.tier.l2{width:72%;background:var(--tier2)}
+.tier.l1{width:100%;background:var(--tier1)}
+.tier .lab{font-family:var(--font-display);font-weight:700;font-size:1.1rem;line-height:1}
+.tier .lab small{display:block;font-family:var(--font-body);font-weight:500;font-size:.72rem;opacity:.8}
+.cnt{display:flex;align-items:center;gap:6px}
+.cnt .bag{font-family:var(--font-display);font-weight:800;font-size:1.6rem;min-width:30px;text-align:center}
+.cnt button{width:30px;height:30px;border-radius:7px;border:1px solid color-mix(in srgb,var(--ink) 30%,transparent);background:var(--surface);cursor:pointer;font-weight:700;line-height:1}
+.side-goals{display:grid;gap:10px}
+.l4{background:var(--bean);color:var(--bean-ink);border-radius:8px;padding:10px 12px;display:grid;gap:6px;min-height:110px;align-content:space-between}
+.l4 .lab,.floor .lab{font-family:var(--font-display);font-weight:700;font-size:1.1rem;line-height:1}
+.l4 .lab small,.floor .lab small{display:block;font-family:var(--font-body);font-weight:500;font-size:.72rem;opacity:.85}
+.floor{border:2px dashed var(--muted);border-radius:8px;padding:10px 12px;display:grid;gap:6px}
+.base{grid-column:1 / -1;height:10px;border-radius:3px;background:repeating-linear-gradient(90deg,var(--line) 0 38px,var(--surface-2) 38px 40px)}
+.scoreboard{display:flex;justify-content:space-between;align-items:end;gap:16px;margin-top:16px;padding:12px 16px;border-radius:9px;background:var(--ink);color:var(--bg)}
+.scoreboard .big{font-family:var(--font-display);font-weight:800;font-size:3.4rem;line-height:.9}
+.scoreboard .bk{font-size:.82rem;opacity:.8;text-align:right}
+.warn{color:var(--red);font-size:.85rem;margin-top:8px}
+
+.proven{display:grid;gap:12px}
+.pv-row{display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:baseline}
+.pv-row .v{font-family:var(--font-display);font-weight:800;font-size:1.7rem;line-height:1}
+.pv-bar{grid-column:1 / -1;height:8px;border-radius:4px;background:var(--surface-2);overflow:hidden}
+.pv-bar i{display:block;height:100%;background:var(--blue);border-radius:4px}
+.pv-bar i.scouted{background:var(--bean)}
+
+.speed{display:grid;grid-template-columns:220px 1fr;gap:20px;align-items:center}
+.speed svg text{fill:var(--ink);font-family:var(--font-display)}
+
+.ev-cols{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.mini-ev{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--line);text-decoration:none;color:inherit}
+.mini-ev:last-child{border-bottom:0}
+.mini-ev:hover .nm{text-decoration:underline}
+.mini-ev .d{color:var(--muted);font-size:.85rem;white-space:nowrap}
+
+.score-cell{font-family:var(--font-display);font-weight:700;font-size:1.1rem}
+
+/* overlay editor */
+.ov{position:fixed;inset:0;background:rgba(10,14,20,.55);display:grid;place-items:start center;overflow:auto;padding:30px 14px;z-index:50}
+.sheet{background:var(--surface);border-radius:12px;max-width:760px;width:100%;padding:22px;display:grid;gap:16px;border:1px solid var(--line)}
+.field{display:grid;gap:6px}
+.field label{font-weight:600;font-size:.9rem}
+.field input[type=text],.field input[type=number],.field select,.field textarea{padding:9px 11px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);width:100%}
+.field textarea{min-height:120px;resize:vertical}
+.types{display:flex;flex-wrap:wrap;gap:8px}
+.types label{display:flex;align-items:center;gap:6px;padding:7px 11px;border:1px solid var(--line);border-radius:8px;cursor:pointer;font-weight:500}
+.types input{accent-color:var(--ink)}
+.types label:has(input:checked){border-color:var(--ink);background:var(--surface-2)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.status{font-size:.88rem;color:var(--muted)}
+.status.err{color:var(--red)}
+.status.ok{color:var(--good)}
+.progress{height:8px;border-radius:4px;background:var(--surface-2);overflow:hidden}
+.progress i{display:block;height:100%;background:var(--good);width:0}
+code{font-size:.85em;background:var(--surface-2);padding:1px 5px;border-radius:4px}
+ol.steps{margin:0;padding-left:20px;display:grid;gap:6px}
+
+@media (max-width:860px){
+  .home-top,.score-grid,.team-head,.ev-cols,.speed{grid-template-columns:1fr}
+  .team-head .photo{max-width:420px}
+}
+@media (max-width:520px){
+  .calc{grid-template-columns:1fr}
+  h1{font-size:2rem}
+  .team-head h1{font-size:2.2rem}
+  .ev{grid-template-columns:52px 1fr}
+  .ev .pill{grid-column:2}
+}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<header class="bar">
+  <div class="bar-in">
+    <a class="brand" href="#">
+      <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><path d="M4 26h22L15 4z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8.5 19h13M11.7 12.5h6.6" stroke="currentColor" stroke-width="2"/><rect x="12" y="21" width="6" height="4" rx="1.5" fill="#F2B705"/></svg>
+      <b>Nevada VEX IQ Scouting</b>
+    </a>
+    <div class="search" role="search">
+      <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M11 11l4 4" stroke="currentColor" stroke-width="2"/></svg>
+      <input id="q" type="search" autocomplete="off" placeholder="Search team number, name or school" aria-label="Search teams">
+      <div class="sugg" id="sugg" role="listbox"></div>
+    </div>
+    <a class="mentor-link" id="importLink" href="#import" hidden>Import data</a>
+  </div>
+</header>
+<main id="app"><div class="panel muted">Loading teams and competitions…</div></main>
+
+<script>
+"use strict";
+/* ---------- constants ---------- */
+const POINTS = {floor:1, l1:3, l2:6, l3:12, l4:16};
+const TOTAL_BAGS = 38;
+const MATCH_SECONDS = 60;
+const ROBOT_TYPES = ["360 Flip Bot","Hero Bot","Dual System Bot","Catapult Bot","Lift Bot","Unknown Bot"];
+const SPEED_SCALE = 15; // gauge max, points per 5 s
+
+/* ---------- state ---------- */
+const S = {
+  teams:new Map(), events:new Map(), scout:new Map(),
+  got:{teams:false,events:false,scout:false},
+  db:null, assets:null, canEdit:false, editing:false,
+  date: todayISO()
+};
+
+/* ---------- helpers ---------- */
+function todayISO(){const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
+function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+const MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+function fmtDate(iso){if(!iso)return"";const[y,m,d]=iso.split("-").map(Number);return MON[m-1]+" "+d+", "+y;}
+function fmtRange(a,b){if(!b||a===b)return fmtDate(a);const[ya,ma]=a.split("-"),[yb,mb]=b.split("-");if(ya===yb&&ma===mb)return MON[+ma-1]+" "+(+a.split("-")[2])+"–"+(+b.split("-")[2])+", "+ya;return fmtDate(a)+" – "+fmtDate(b);}
+function evStatus(e,ref){ref=ref||todayISO();const end=e.end||e.start;if(e.start<=ref&&end>=ref)return["live","Happening"];if(e.start>ref)return["up","Upcoming"];return["done","Completed"];}
+function calcTotal(c){c=c||{};return Object.keys(POINTS).reduce((s,k)=>s+(+c[k]||0)*POINTS[k],0);}
+function bagCount(c){c=c||{};return Object.keys(POINTS).reduce((s,k)=>s+(+c[k]||0),0);}
+function validId(s){return /^[A-Za-z0-9_\-.~:@+]+$/.test(s)&&s!=="."&&s!=="..";}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+
+function teamEvents(num){
+  const t=S.teams.get(num); const skus=new Set(t&&Array.isArray(t.events)?t.events:[]);
+  for(const [sku,e] of S.events){ if((e.teams||[]).some(x=>x.number===num)) skus.add(sku); }
+  return [...skus].map(s=>S.events.get(s)).filter(Boolean).sort((a,b)=>a.start<b.start?-1:1);
+}
+function proven(t){
+  const m=(t&&t.matches||[]).filter(x=>x.scored!==false&&typeof x.score==="number");
+  const bestMatch=m.length?Math.max(...m.map(x=>x.score)):null;
+  const avgMatch=m.length?Math.round(m.reduce((s,x)=>s+x.score,0)/m.length):null;
+  const sk=t&&t.skills||[]; let drv=null,prg=null; const byEv={};
+  for(const s of sk){ if(typeof s.score!=="number")continue;
+    const k=s.event||"?"; byEv[k]=byEv[k]||{driver:0,programming:0};
+    if(s.type==="driver"){drv=Math.max(drv??0,s.score);byEv[k].driver=Math.max(byEv[k].driver,s.score);}
+    if(s.type==="programming"){prg=Math.max(prg??0,s.score);byEv[k].programming=Math.max(byEv[k].programming,s.score);}
+  }
+  const combos=Object.values(byEv).map(v=>v.driver+v.programming);
+  return {bestMatch,avgMatch,matches:m.length,drv,prg,combined:combos.length?Math.max(...combos):null};
+}
+
+/* ---------- router ---------- */
+function route(){
+  if(S.editing) return;
+  const h=decodeURIComponent(location.hash.slice(1));
+  if(h.startsWith("team-")) return renderTeam(h.slice(5));
+  if(h.startsWith("event-")) return renderEvent(h.slice(6));
+  if(h==="import") return renderImport();
+  return renderHome();
+}
+window.addEventListener("hashchange",()=>{window.scrollTo(0,0);route();});
+function app(){return document.getElementById("app");}
+function allLoaded(){return S.got.teams&&S.got.events&&S.got.scout;}
+
+/* ---------- home ---------- */
+function renderHome(){
+  const el=app();
+  if(el.dataset.view!=="home"){
+    el.dataset.view="home";
+    el.innerHTML=`
+    <section class="home-top">
+      <div class="panel hero">
+        <h1>Find a team, see what their robot can do</h1>
+        <p>Middle school VEX IQ teams in Nevada for the 2026-27 Level Up season: competitions, match scores, robot photos and scouting notes.</p>
+        <div class="hero-stats" id="heroStats"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-h"><h2>Competitions on a date</h2></div>
+        <div class="datebox">
+          <label for="dt" class="small muted">Show competitions running on</label>
+          <input type="date" id="dt" value="${esc(S.date)}">
+          <button class="btn" id="dtToday" type="button">Today</button>
+        </div>
+        <div id="activeList" class="ev-list" style="margin-top:14px"></div>
+      </div>
+    </section>
+    <section class="panel">
+      <div class="panel-h"><h2>Upcoming competitions</h2><span class="small muted" id="upCount"></span></div>
+      <div id="upList" class="ev-list"></div>
+    </section>
+    <section class="panel">
+      <div class="panel-h"><h2>All teams</h2><span class="small muted" id="teamCount"></span></div>
+      <div class="tablewrap"><table><thead><tr><th>Team</th><th>Name</th><th>School / academy</th><th>Robot</th><th>Scouted max</th><th>Best match</th></tr></thead><tbody id="teamRows"></tbody></table></div>
+    </section>`;
+    document.getElementById("dt").addEventListener("change",e=>{S.date=e.target.value||todayISO();updateHome();});
+    document.getElementById("dtToday").addEventListener("click",()=>{S.date=todayISO();document.getElementById("dt").value=S.date;updateHome();});
+    document.getElementById("teamRows").addEventListener("click",e=>{const tr=e.target.closest("tr[data-team]");if(tr)location.hash="team-"+tr.dataset.team;});
+  }
+  updateHome();
+}
+function evCard(e,ref){
+  const [cls,lab]=evStatus(e,ref);const[y,m,d]=(e.start||"--").split("-");
+  const n=(e.teams||[]).length;
+  return `<a class="ev" href="#event-${esc(e.sku)}">
+    <div class="dt"><b>${esc(+d||"")}</b><span>${esc(MON[+m-1]||"")}</span></div>
+    <div><div class="nm">${esc(e.name)}${e.demo?'<span class="demo-flag">Demo</span>':""}</div>
+      <div class="small muted">${esc(fmtRange(e.start,e.end))}${e.city?", "+esc(e.city):""} &nbsp;|&nbsp; ${n} MS team${n===1?"":"s"} registered</div></div>
+    <span class="pill ${cls}">${lab}</span></a>`;
+}
+function updateHome(){
+  if(app().dataset.view!=="home")return;
+  const evs=[...S.events.values()].sort((a,b)=>a.start<b.start?-1:1);
+  const active=evs.filter(e=>e.start<=S.date&&(e.end||e.start)>=S.date);
+  const today=todayISO();
+  const up=evs.filter(e=>e.start>today);
+  const teams=[...S.teams.values()].sort((a,b)=>a.number.localeCompare(b.number,undefined,{numeric:true}));
+  const scouted=teams.filter(t=>S.scout.has(t.number)).length;
+  document.getElementById("heroStats").innerHTML=allLoaded()?`
+    <div><b>${teams.length}</b><span>teams</span></div>
+    <div><b>${evs.length}</b><span>competitions</span></div>
+    <div><b>${scouted}</b><span>robots scouted</span></div>`:`<div class="muted small">Loading…</div>`;
+  document.getElementById("activeList").innerHTML=!allLoaded()?`<div class="muted small">Loading…</div>`:
+    active.length?active.map(e=>evCard(e,S.date)).join(""):`<div class="note">No competitions running on ${esc(fmtDate(S.date))}. Pick another date, or open one from the upcoming list below.</div>`;
+  document.getElementById("upCount").textContent=up.length?up.length+" scheduled":"";
+  document.getElementById("upList").innerHTML=up.length?up.slice(0,8).map(e=>evCard(e)).join(""):`<div class="note">No upcoming competitions in the data yet.${S.canEdit?' Use <a href="#import">Import data</a> to load them from RobotEvents.':""}</div>`;
+  document.getElementById("teamCount").textContent=teams.length?teams.length+" teams":"";
+  document.getElementById("teamRows").innerHTML=teams.length?teams.map(t=>{
+    const sc=S.scout.get(t.number);const p=proven(t);
+    return `<tr class="click" data-team="${esc(t.number)}" tabindex="0">
+      <td class="tn"><a href="#team-${esc(t.number)}" style="color:inherit;text-decoration:none">${esc(t.number)}</a></td>
+      <td>${esc(t.name)}${t.demo?'<span class="demo-flag">Demo</span>':""}</td>
+      <td class="muted">${esc(t.org)}</td>
+      <td>${sc&&sc.robotType?`<span class="typechip">${esc(sc.robotType)}</span>`:'<span class="muted small">Not scouted</span>'}</td>
+      <td class="score-cell">${sc&&sc.calc?calcTotal(sc.calc):"–"}</td>
+      <td class="score-cell">${p.bestMatch??"–"}</td></tr>`;}).join(""):
+    `<tr><td colspan="6"><div class="note">${allLoaded()?"No teams yet."+(S.canEdit?' Use <a href="#import">Import data</a> to load your RobotEvents file.':" Your mentor has not loaded team data yet."):"Loading…"}</div></td></tr>`;
+}
+
+/* ---------- event ---------- */
+function renderEvent(sku){
+  const el=app(); el.dataset.view="event";
+  const e=S.events.get(sku);
+  if(!e){el.innerHTML=`<div class="panel">${allLoaded()?`<h2>Competition not found</h2><p class="muted">No competition with code ${esc(sku)} is in the data. <a href="#">Back to home</a></p>`:'<span class="muted">Loading…</span>'}</div>`;return;}
+  const [cls,lab]=evStatus(e);
+  const regs=(e.teams||[]).slice().sort((a,b)=>a.number.localeCompare(b.number,undefined,{numeric:true}));
+  el.innerHTML=`
+  <section class="panel">
+    <a href="#" class="small">Back to home</a>
+    <div class="panel-h" style="margin-top:8px"><h1>${esc(e.name)}${e.demo?'<span class="demo-flag">Demo</span>':""}</h1><span class="pill ${cls}">${lab}</span></div>
+    <div class="facts"><span><b>${esc(fmtRange(e.start,e.end))}</b></span>${e.venue?`<span>${esc(e.venue)}</span>`:""}${e.city?`<span>${esc(e.city)}${e.region?", "+esc(e.region):""}</span>`:""}<span>Code <b>${esc(e.sku)}</b></span>
+    ${e.reId?`<a href="https://www.robotevents.com/robot-competitions/vex-iq-competition/${encodeURIComponent(e.sku)}.html" rel="noopener">Open on RobotEvents</a>`:""}</div>
+  </section>
+  <section class="panel">
+    <div class="panel-h"><h2>Registered middle school teams</h2><span class="small muted">${regs.length} team${regs.length===1?"":"s"}</span></div>
+    <div class="tablewrap"><table><thead><tr><th>Team</th><th>Name</th><th>School / academy</th><th>Robot</th><th>Scouted max</th><th>Best match</th></tr></thead><tbody id="evRows">
+    ${regs.length?regs.map(r=>{const t=S.teams.get(r.number);const sc=S.scout.get(r.number);const p=proven(t);
+      return t?`<tr class="click" data-team="${esc(r.number)}" tabindex="0"><td class="tn"><a href="#team-${esc(r.number)}">${esc(r.number)}</a></td><td>${esc(t.name||r.name)}</td><td class="muted">${esc(t.org||r.org)}</td>
+        <td>${sc&&sc.robotType?`<span class="typechip">${esc(sc.robotType)}</span>`:'<span class="muted small">Not scouted</span>'}</td><td class="score-cell">${sc&&sc.calc?calcTotal(sc.calc):"–"}</td><td class="score-cell">${p.bestMatch??"–"}</td></tr>`
+      :`<tr><td class="tn muted">${esc(r.number)}</td><td>${esc(r.name)}</td><td class="muted">${esc(r.org)}</td><td colspan="3" class="small muted">Out-of-region team, no stats page</td></tr>`;}).join("")
+      :`<tr><td colspan="6"><div class="note">No middle school teams registered yet.</div></td></tr>`}
+    </tbody></table></div>
+  </section>`;
+  document.getElementById("evRows").addEventListener("click",ev=>{const tr=ev.target.closest("tr[data-team]");if(tr)location.hash="team-"+tr.dataset.team;});
+}
+
+/* ---------- calculator graphic ---------- */
+function calcHTML(c,editable){
+  c=c||{};
+  const ctl=(k)=>editable?`<div class="cnt"><button type="button" data-k="${k}" data-d="-1" aria-label="Remove one">−</button><span class="bag num" id="c-${k}">${+c[k]||0}</span><button type="button" data-k="${k}" data-d="1" aria-label="Add one">+</button></div>`
+                         :`<div class="cnt"><span class="bag num">${+c[k]||0}</span></div>`;
+  const tier=(k,name)=>`<div class="tier ${k}"><div class="lab">${name}<small>${POINTS[k]} pts each</small></div>${ctl(k)}</div>`;
+  const total=calcTotal(c),bags=bagCount(c);
+  return `<div class="calc" data-calc>
+    <div class="pyr" aria-label="Pyramid Goal">${tier("l3","L3")}${tier("l2","L2")}${tier("l1","L1")}</div>
+    <div class="side-goals">
+      <div class="l4"><div class="lab">L4 Goal<small>16 pts, yellow only</small></div>${ctl("l4")}</div>
+      <div class="floor"><div class="lab">Floor Goal<small>1 pt each</small></div>${ctl("floor")}</div>
+    </div>
+    <div class="base"></div>
+  </div>
+  <div class="scoreboard"><div><div class="small" style="opacity:.8">Total</div><div class="big num" id="calcTotal">${total}</div></div>
+    <div class="bk" id="calcBk">${bags} of ${TOTAL_BAGS} bean bags<br>${(+c.l3||0)*12} L3 + ${(+c.l2||0)*6} L2 + ${(+c.l1||0)*3} L1 + ${(+c.l4||0)*16} L4 + ${+c.floor||0} floor</div></div>
+  ${bags>TOTAL_BAGS?`<div class="warn">That is more than the ${TOTAL_BAGS} bean bags on the field.</div>`:""}`;
+}
+
+/* ---------- speed gauge ---------- */
+function gaugeSVG(v){
+  const pct=Math.max(0,Math.min(1,(v||0)/SPEED_SCALE));
+  const a=Math.PI*(1-pct), cx=110, cy=110, r=88;
+  const x=cx+r*Math.cos(a), y=cy-r*Math.sin(a);
+  const ticks=[0,5,10,15].map(t=>{const ta=Math.PI*(1-t/SPEED_SCALE);return `<text x="${cx+(r+16)*Math.cos(ta)}" y="${cy-(r+16)*Math.sin(ta)+4}" font-size="12" text-anchor="middle" opacity=".7">${t}</text>`;}).join("");
+  return `<svg viewBox="0 0 220 130" width="220" height="130" role="img" aria-label="${(v||0).toFixed(1)} points per 5 seconds">
+    <path d="M22 110 A88 88 0 0 1 198 110" fill="none" stroke="var(--surface-2)" stroke-width="16" stroke-linecap="round"/>
+    ${pct>0?`<path d="M22 110 A88 88 0 0 1 ${x.toFixed(1)} ${y.toFixed(1)}" fill="none" stroke="var(--bean)" stroke-width="16" stroke-linecap="round"/>`:""}
+    ${ticks}
+    <text x="110" y="100" font-size="40" font-weight="800" text-anchor="middle">${(v||0).toFixed(1)}</text>
+    <text x="110" y="122" font-size="13" text-anchor="middle" opacity=".7">pts / 5 s</text></svg>`;
+}
+
+/* ---------- team ---------- */
+function robotIcon(){return `<svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><rect x="3" y="8" width="16" height="9" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="7" cy="19" r="2" fill="currentColor"/><circle cx="15" cy="19" r="2" fill="currentColor"/><path d="M11 8V3h5" stroke="currentColor" stroke-width="2" fill="none"/></svg>`;}
+function renderTeam(num){
+  const el=app(); el.dataset.view="team";
+  const t=S.teams.get(num);
+  if(!t){el.innerHTML=`<div class="panel">${allLoaded()?`<h2>Team ${esc(num)} not found</h2><p class="muted">Try the search box above. <a href="#">Back to home</a></p>`:'<span class="muted">Loading…</span>'}</div>`;return;}
+  const sc=S.scout.get(num)||{};
+  const p=proven(t);
+  const evs=teamEvents(num); const today=todayISO();
+  const past=evs.filter(e=>(e.end||e.start)<today).reverse();
+  const future=evs.filter(e=>(e.end||e.start)>=today);
+  const calcT=calcTotal(sc.calc);
+  const hasCalc=!!sc.calc&&calcT>0;
+  const speedEntered=typeof sc.pps5==="number"&&sc.pps5>0;
+  const speed=speedEntered?sc.pps5:(hasCalc?calcT/(MATCH_SECONDS/5):0);
+  const maxBar=Math.max(calcT,p.bestMatch||0,p.combined||0,1);
+  const bar=(v,cls)=>`<div class="pv-bar"><i class="${cls||""}" style="width:${v?Math.round(v/maxBar*100):0}%"></i></div>`;
+  const matches=(t.matches||[]).slice().sort((a,b)=>(a.date||"")<(b.date||"")?1:-1);
+  const photo=sc.photoId?`<img src="/_blob/${esc(sc.photoId)}" alt="Robot of team ${esc(num)}">`:`<div class="ph">${robotIcon()}<br>No robot photo yet</div>`;
+
+  el.innerHTML=`
+  <section class="panel team-head">
+    <div class="photo">${photo}</div>
+    <div>
+      <div class="row" style="justify-content:space-between"><span class="tnum">Team ${esc(t.number)}${t.demo?'<span class="demo-flag">Demo</span>':""}</span>
+        ${S.canEdit?`<button class="btn bean" id="editBtn" type="button">Edit scouting</button>`:""}</div>
+      <h1>${esc(t.name||t.number)}</h1>
+      <div class="facts"><span>School / academy <b>${esc(t.org||"Unknown")}</b></span>${t.city?`<span>${esc(t.city)}${t.region?", "+esc(t.region):""}</span>`:""}${t.robotName?`<span>Robot <b>${esc(t.robotName)}</b></span>`:""}<span>${esc(t.grade||"Middle School")}</span></div>
+      <div class="rtype">${robotIcon()} ${esc(sc.robotType||"Unknown Bot")}</div>
+      <div class="writeup">${sc.writeup?esc(sc.writeup):'<span class="muted">No robot write-up yet.</span>'}</div>
+    </div>
+  </section>
+
+  <section class="score-grid">
+    <div class="panel">
+      <div class="panel-h"><h2>Maximum possible score</h2><span class="small muted">Scouted, one robot, 60 s match</span></div>
+      ${hasCalc?calcHTML(sc.calc,false):`<div class="note">This robot has not been scouted yet. ${S.canEdit?"Click Edit scouting to fill in the Level Up calculator.":""}</div>${calcHTML({},false)}`}
+    </div>
+    <div class="panel">
+      <div class="panel-h"><h2>Scouted vs proven</h2></div>
+      <div class="proven">
+        <div class="pv-row"><span>Scouted max</span><span class="v num">${hasCalc?calcT:"–"}</span>${bar(calcT,"scouted")}</div>
+        <div class="pv-row"><span>Best teamwork match<br><span class="small muted">alliance score</span></span><span class="v num">${p.bestMatch??"–"}</span>${bar(p.bestMatch)}</div>
+        <div class="pv-row"><span>Average teamwork match<br><span class="small muted">${p.matches} scored match${p.matches===1?"":"es"}</span></span><span class="v num">${p.avgMatch??"–"}</span>${bar(p.avgMatch)}</div>
+        <div class="pv-row"><span>Best combined skills<br><span class="small muted">driver ${p.drv??"–"} + programming ${p.prg??"–"}</span></span><span class="v num">${p.combined??"–"}</span>${bar(p.combined)}</div>
+      </div>
+      <p class="small muted" style="margin:14px 0 0">Teamwork scores are shared by two robots, so a strong partner can push the proven number above one robot's scouted max.</p>
+    </div>
+  </section>
+
+  <section class="panel speed">
+    ${gaugeSVG(speed)}
+    <div><h2>Scoring speed</h2>
+      <p class="muted" style="margin:6px 0 0;max-width:60ch">${speedEntered?`Timed by a scout: <b style="color:var(--ink)">${sc.pps5.toFixed(1)} points every 5 seconds</b>.`:hasCalc?`Estimated from the scouted max: ${calcT} points over ${MATCH_SECONDS} seconds is ${speed.toFixed(1)} points every 5 seconds. A timed value from a scout will replace this.`:"No speed recorded yet."}</p>
+    </div>
+  </section>
+
+  <section class="ev-cols">
+    <div class="panel"><div class="panel-h"><h2>Upcoming competitions</h2></div>
+      ${future.length?future.map(e=>`<a class="mini-ev" href="#event-${esc(e.sku)}"><span class="nm">${esc(e.name)}</span><span class="d">${esc(fmtRange(e.start,e.end))}</span></a>`).join(""):'<div class="muted small">None registered.</div>'}</div>
+    <div class="panel"><div class="panel-h"><h2>Past competitions</h2></div>
+      ${past.length?past.map(e=>`<a class="mini-ev" href="#event-${esc(e.sku)}"><span class="nm">${esc(e.name)}</span><span class="d">${esc(fmtRange(e.start,e.end))}</span></a>`).join(""):'<div class="muted small">None yet this season.</div>'}</div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-h"><h2>Match results</h2><span class="small muted">${matches.length} match${matches.length===1?"":"es"}</span></div>
+    ${matches.length?`<div class="tablewrap"><table><thead><tr><th>Date</th><th>Competition</th><th>Round</th><th>Match</th><th>Partner</th><th>Score</th></tr></thead><tbody>
+      ${matches.map(m=>`<tr><td class="muted small" style="white-space:nowrap">${esc(fmtDate(m.date))}</td><td>${esc(m.eventName)}</td><td>${esc(m.round)}</td><td>${esc(m.name)}</td>
+        <td>${(m.partners||[]).map(n=>S.teams.has(n)?`<a href="#team-${esc(n)}">${esc(n)}</a>`:esc(n)).join(", ")||'<span class="muted">–</span>'}</td>
+        <td class="score-cell">${m.scored===false?'<span class="muted">Not played</span>':esc(m.score)}</td></tr>`).join("")}
+    </tbody></table></div>`:'<div class="note">No match results yet.</div>'}
+  </section>`;
+  const eb=document.getElementById("editBtn"); if(eb) eb.addEventListener("click",()=>openEditor(num));
+}
+
+/* ---------- mentor editor ---------- */
+function openEditor(num){
+  const t=S.teams.get(num); const cur=S.scout.get(num)||{};
+  const draft={robotType:cur.robotType||"Unknown Bot",writeup:cur.writeup||"",pps5:cur.pps5??"",photoId:cur.photoId||"",calc:Object.assign({floor:0,l1:0,l2:0,l3:0,l4:0},cur.calc||{})};
+  S.editing=true;
+  const ov=document.createElement("div"); ov.className="ov"; ov.setAttribute("role","dialog"); ov.setAttribute("aria-modal","true"); ov.setAttribute("aria-label","Edit scouting for "+num);
+  ov.innerHTML=`<form class="sheet" id="edForm">
+    <div class="panel-h" style="margin:0"><h2>Scouting for ${esc(num)} ${esc(t.name||"")}</h2><button type="button" class="btn" id="edClose">Close</button></div>
+    <div class="field"><span style="font-weight:600;font-size:.9rem">Robot type</span><div class="types">
+      ${ROBOT_TYPES.map((rt,i)=>`<label><input type="radio" name="rtype" id="rt${i}" value="${esc(rt)}" ${draft.robotType===rt?"checked":""}> ${esc(rt)}</label>`).join("")}</div></div>
+    <div class="field"><label for="edWrite">Robot write-up</label><textarea id="edWrite" placeholder="Drivetrain, intake, how it scores, strengths, weak spots, auton notes">${esc(draft.writeup)}</textarea></div>
+    <div class="field"><span style="font-weight:600;font-size:.9rem">Maximum possible score (one robot, 60 s)</span><div id="edCalc">${calcHTML(draft.calc,true)}</div></div>
+    <div class="field"><label for="edSpeed">Timed scoring speed, points per 5 seconds</label>
+      <input type="number" id="edSpeed" min="0" max="60" step="0.1" value="${esc(draft.pps5)}" placeholder="Leave blank to estimate from max ÷ 12">
+      <span class="small muted">Time a run, then divide points by seconds and multiply by 5.</span></div>
+    <div class="field"><label for="edPhoto">Robot photo</label>
+      <div class="row"><input type="file" id="edPhoto" accept="image/*"><span class="status" id="phStatus">${draft.photoId?"Photo saved. Choose a file to replace it.":""}</span>
+      ${draft.photoId?`<button type="button" class="btn danger" id="phRemove">Remove photo</button>`:""}</div></div>
+    <div class="row"><button class="btn primary" type="submit" id="edSave">Save scouting</button><span class="status" id="edStatus"></span></div>
+  </form>`;
+  document.body.appendChild(ov);
+  const close=()=>{ov.remove();S.editing=false;route();};
+  ov.querySelector("#edClose").addEventListener("click",close);
+  ov.addEventListener("keydown",e=>{if(e.key==="Escape")close();});
+  ov.querySelector("#edCalc").addEventListener("click",e=>{
+    const b=e.target.closest("button[data-k]"); if(!b)return;
+    const k=b.dataset.k; draft.calc[k]=Math.max(0,(+draft.calc[k]||0)+(+b.dataset.d));
+    ov.querySelector("#edCalc").innerHTML=calcHTML(draft.calc,true);
+    const again=ov.querySelector(`#edCalc button[data-k="${k}"][data-d="${b.dataset.d}"]`); if(again)again.focus();
+  });
+  const rm=ov.querySelector("#phRemove"); if(rm) rm.addEventListener("click",()=>{draft.photoId="";ov.querySelector("#phStatus").textContent="Photo will be removed when you save.";rm.remove();});
+  ov.querySelector("#edPhoto").addEventListener("change",async e=>{
+    const f=e.target.files[0]; const st=ov.querySelector("#phStatus"); if(!f)return;
+    if(!S.assets){st.className="status err";st.textContent="Photo upload is not available in this view.";return;}
+    if(f.size>20*1024*1024){st.className="status err";st.textContent="That photo is over 20 MB. Choose a smaller one.";return;}
+    st.className="status";st.textContent="Uploading…";
+    try{const r=await S.assets.upload(f);draft.photoId=r.id;st.className="status ok";st.textContent="Photo uploaded. Save to keep it.";}
+    catch(err){st.className="status err";st.textContent="Upload failed: "+(err&&err.message||"try again");}
+  });
+  ov.querySelector("#edForm").addEventListener("submit",async e=>{
+    e.preventDefault();
+    const st=ov.querySelector("#edStatus"), btn=ov.querySelector("#edSave");
+    const sel=ov.querySelector('input[name="rtype"]:checked');
+    const sp=ov.querySelector("#edSpeed").value;
+    const doc={team:num,robotType:sel?sel.value:"Unknown Bot",writeup:ov.querySelector("#edWrite").value.trim().slice(0,4000),
+      calc:draft.calc,pps5:sp===""?null:Math.max(0,+sp),photoId:draft.photoId||null,updated:new Date().toISOString()};
+    if(t.demo) doc.demo=true;
+    btn.disabled=true; st.className="status"; st.textContent="Saving…";
+    try{await S.db.doc("scout/"+num).set(doc);S.scout.set(num,doc);st.className="status ok";st.textContent="Saved.";setTimeout(close,500);}
+    catch(err){btn.disabled=false;st.className="status err";st.textContent=err&&err.code==="invalid_argument"?"Only the mentor can save scouting on this page.":"Could not save. Check your connection and try again.";}
+  });
+  ov.querySelector("input[name=rtype]:checked")?.focus();
+}
+
+/* ---------- import ---------- */
+function renderImport(){
+  const el=app(); el.dataset.view="import";
+  if(!S.canEdit){el.innerHTML=`<div class="panel"><h2>Import is for the mentor</h2><p class="muted">Only the mentor who owns this page can load RobotEvents data. <a href="#">Back to home</a></p></div>`;return;}
+  const demoCount=[...S.teams.values(),...S.events.values(),...S.scout.values()].filter(x=>x.demo).length;
+  el.innerHTML=`
+  <section class="panel">
+    <a href="#" class="small">Back to home</a>
+    <h1 style="margin:8px 0 10px">Import RobotEvents data</h1>
+    <ol class="steps">
+      <li>Create a free API token at <a href="https://www.robotevents.com/api/v2" rel="noopener">robotevents.com/api/v2</a> (sign in, then "Request API Access").</li>
+      <li>Run <code>re_sync.py</code> on your computer with the token set as <code>RE_TOKEN</code>. It writes <code>nv_viqrc_ms.json</code>.</li>
+      <li>Choose that file below. Teams and competitions are updated; your scouting notes and photos are kept.</li>
+    </ol>
+    <div class="row" style="margin-top:16px"><input type="file" id="impFile" accept=".json,application/json"><button class="btn primary" id="impGo" type="button" disabled>Import file</button></div>
+    <div class="progress" style="margin-top:12px"><i id="impBar"></i></div>
+    <div class="status" id="impStatus" style="margin-top:8px">Choose the JSON file to begin.</div>
+  </section>
+  <section class="panel">
+    <div class="panel-h"><h2>Demo data</h2><span class="small muted">${demoCount} demo record${demoCount===1?"":"s"}</span></div>
+    <p class="muted" style="margin-top:0">The sample teams marked Demo show how the site works. Remove them once your real data is in.</p>
+    <button class="btn danger" id="demoDel" type="button" ${demoCount?"":"disabled"}>Remove demo data</button> <span class="status" id="demoStatus"></span>
+  </section>`;
+  let payload=null;
+  const st=el.querySelector("#impStatus"), go=el.querySelector("#impGo"), barI=el.querySelector("#impBar");
+  el.querySelector("#impFile").addEventListener("change",async e=>{
+    payload=null; go.disabled=true; const f=e.target.files[0]; if(!f)return;
+    try{const j=JSON.parse(await f.text());
+      if(j.format!=="viqrc-scout-v1"||!Array.isArray(j.teams)||!Array.isArray(j.events))throw new Error("format");
+      payload=j; go.disabled=false; st.className="status"; st.textContent=`Ready: ${j.teams.length} teams and ${j.events.length} competitions from ${j.season||"RobotEvents"}, generated ${fmtDate((j.generated||"").slice(0,10))}.`;
+    }catch(err){st.className="status err";st.textContent="This is not a file from re_sync.py. Run the script again and choose nv_viqrc_ms.json.";}
+  });
+  go.addEventListener("click",async()=>{
+    if(!payload)return; go.disabled=true;
+    const ops=[];
+    for(const t of payload.teams){ if(!t.number||!validId(t.number))continue;
+      ops.push(["teams/"+t.number,{number:t.number,name:t.name||"",robotName:t.robotName||"",org:t.org||"",city:t.city||"",region:t.region||"",grade:t.grade||"",reId:t.reId||null,events:t.events||[],matches:t.matches||[],skills:t.skills||[]}]); }
+    for(const e of payload.events){ if(!e.sku||!validId(e.sku))continue;
+      ops.push(["events/"+e.sku,{sku:e.sku,name:e.name||"",start:e.start||"",end:e.end||e.start||"",venue:e.venue||"",city:e.city||"",region:e.region||"",reId:e.reId||null,teams:e.teams||[]}]); }
+    let done=0,failed=0;
+    for(const [path,data] of ops){
+      let ok=false;
+      for(let a=0;a<4&&!ok;a++){
+        try{await S.db.doc(path).set(data);ok=true;}
+        catch(err){ if(err&&(err.code==="resource_exhausted"||err.code==="unavailable")){await sleep(1500*(a+1));} else break; }
+      }
+      if(!ok)failed++; done++;
+      barI.style.width=Math.round(done/ops.length*100)+"%";
+      st.className="status"; st.textContent=`Saving ${done} of ${ops.length}…`;
+      await sleep(60);
+    }
+    st.className=failed?"status err":"status ok";
+    st.textContent=failed?`Imported ${ops.length-failed} records. ${failed} could not be saved; run the import again to retry them.`:`Imported ${ops.length} records. Teams and competitions are up to date.`;
+    go.disabled=false;
+  });
+  el.querySelector("#demoDel").addEventListener("click",async e=>{
+    const b=e.currentTarget, ds=el.querySelector("#demoStatus"); b.disabled=true; ds.textContent="Removing…";
+    const paths=[...[...S.teams.values()].filter(x=>x.demo).map(x=>"teams/"+x.number),
+                 ...[...S.events.values()].filter(x=>x.demo).map(x=>"events/"+x.sku),
+                 ...[...S.scout.entries()].filter(([k,v])=>v.demo).map(([k])=>"scout/"+k)];
+    for(const p of paths){try{await S.db.doc(p).delete();}catch(err){} await sleep(60);}
+    ds.className="status ok"; ds.textContent="Demo data removed.";
+  });
+}
+
+/* ---------- search ---------- */
+(function(){
+  const q=document.getElementById("q"), box=document.getElementById("sugg"); let hl=-1, hits=[];
+  function show(){
+    const s=q.value.trim().toLowerCase();
+    if(!s){box.classList.remove("open");return;}
+    hits=[...S.teams.values()].filter(t=>(t.number+" "+t.name+" "+t.org).toLowerCase().includes(s))
+      .sort((a,b)=>(b.number.toLowerCase().startsWith(s))-(a.number.toLowerCase().startsWith(s))||a.number.localeCompare(b.number,undefined,{numeric:true})).slice(0,8);
+    hl=hits.length?0:-1;
+    box.innerHTML=hits.length?hits.map((t,i)=>`<a href="#team-${esc(t.number)}" role="option" class="${i===hl?"hl":""}"><span class="tn">${esc(t.number)}</span><span>${esc(t.name)}<br><span class="sub">${esc(t.org)}</span></span></a>`).join("")
+      :`<a role="option" aria-disabled="true"><span class="sub">No team matches "${esc(q.value.trim())}"</span></a>`;
+    box.classList.add("open");
+  }
+  q.addEventListener("input",show);
+  q.addEventListener("focus",show);
+  q.addEventListener("keydown",e=>{
+    if(e.key==="ArrowDown"||e.key==="ArrowUp"){ if(!hits.length)return; e.preventDefault(); hl=(hl+(e.key==="ArrowDown"?1:-1)+hits.length)%hits.length; [...box.children].forEach((a,i)=>a.classList.toggle("hl",i===hl)); }
+    else if(e.key==="Enter"){ if(hits[hl]){location.hash="team-"+hits[hl].number;q.value="";box.classList.remove("open");q.blur();} }
+    else if(e.key==="Escape"){box.classList.remove("open");}
+  });
+  box.addEventListener("click",()=>{q.value="";box.classList.remove("open");});
+  document.addEventListener("click",e=>{if(!e.target.closest(".search"))box.classList.remove("open");});
+})();
+
+/* ---------- data ---------- */
+async function start(){
+  route();
+  const db=await claude.use("db");
+  if(!db){app().innerHTML=`<div class="panel"><h2>Sign in to see scouting data</h2><p class="muted">Team and competition data loads for signed-in viewers of this page.</p></div>`;return;}
+  S.db=db;
+  try{const user=await claude.use("user"); S.canEdit=user?!!(await user.canEdit()):false;}catch(e){S.canEdit=false;}
+  if(S.canEdit){document.getElementById("importLink").hidden=false; try{S.assets=await claude.use("assets");}catch(e){}}
+  const timer=setTimeout(()=>{if(!allLoaded()){const n=document.createElement("div");n.className="note";n.textContent="Scouting data is taking a while to load. It will appear here as soon as the connection catches up.";app().prepend(n);}},10000);
+  const sub=(name,key,keyField)=>db.collection(name).onSnapshot(snap=>{
+    const m=new Map(); for(const d of snap.docs){const v=d.data(); if(v) m.set(d.id,Object.assign({},v,keyField?{[keyField]:v[keyField]||d.id}:{}));}
+    S[key]=m; if(!snap.metadata.fromCache)S.got[key]=true; else if(m.size)S.got[key]=true;
+    if(allLoaded())clearTimeout(timer);
+    route();
+  },err=>{S.got[key]=true;route();});
+  sub("teams","teams","number"); sub("events","events","sku"); sub("scout","scout",null);
+}
+if(window.claude&&claude.use) start(); else { app().innerHTML=`<div class="panel"><h2>Open this page on claude.ai</h2><p class="muted">The scouting database is available when the page is viewed from its claude.ai link.</p></div>`; }
+</script>
+</body>
+</html>
